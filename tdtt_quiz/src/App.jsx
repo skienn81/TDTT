@@ -400,12 +400,12 @@ const EXAM_SET_06_DATA = [
 ];
 
 const EXAM_SETS = [
-  { id: "SET_01", title: "Bộ Đề 01: Nền Tảng Trace Code", description: "Ngân hàng 50 câu hỏi truy xuất luồng chạy, tập trung vào vòng lặp, scope, list dict và OOP cơ bản.", questionCount: 50, data: EXAM_SET_01_DATA },
-  { id: "SET_02", title: "Bộ Đề 02: Cạm Bẫy Trình Thông Dịch", description: "Đi sâu vào Identity is/==, bẫy Mutable Defaults, Generator, MRO và K-Means.", questionCount: 50, data: EXAM_SET_02_DATA },
-  { id: "SET_03", title: "Bộ Đề 03: Tư Duy Logic Cốt Lõi", description: "Khai thác De Morgan, Slicing nâng cao, Late vs Early Binding, Dead Exception và IEEE 754.", questionCount: 50, data: EXAM_SET_03_DATA },
-  { id: "SET_04", title: "Bộ Đề 04: Lốc Xoáy Bẫy Vùng Nhớ", description: "Xoáy sâu vào rò rỉ biến (Loop leak), mảng 2 chiều nhân bản, và toán tử đoản mạch hiểm hóc.", questionCount: 50, data: EXAM_SET_04_DATA },
-  { id: "SET_05", title: "Bộ Đề 05: Tuyệt Đỉnh Phân Tích", description: "Khám phá ảo thuật Boolean, List Comprehension filter, File EOF và Class Scope.", questionCount: 50, data: EXAM_SET_05_DATA },
-  { id: "SET_06", title: "Bộ Đề 06: Trùm Cuối Sinh Tử", description: "50 câu hỏi tinh hoa kiểm tra Float Precision, MRO phức tạp và cạm bẫy Assert Tuple.", questionCount: 50, data: EXAM_SET_06_DATA }
+  { id: "SET_01", title: "Bộ Đề 01: ", description: "Ngân hàng 50 câu hỏi truy xuất luồng chạy, tập trung vào vòng lặp, scope, list dict và OOP cơ bản.", questionCount: 50, data: EXAM_SET_01_DATA },
+  { id: "SET_02", title: "Bộ Đề 02: ", description: "Đi sâu vào Identity is/==, bẫy Mutable Defaults, Generator, MRO và K-Means.", questionCount: 50, data: EXAM_SET_02_DATA },
+  { id: "SET_03", title: "Bộ Đề 03: ", description: "Khai thác De Morgan, Slicing nâng cao, Late vs Early Binding, Dead Exception và IEEE 754.", questionCount: 50, data: EXAM_SET_03_DATA },
+  { id: "SET_04", title: "Bộ Đề 04: ", description: "Xoáy sâu vào rò rỉ biến (Loop leak), mảng 2 chiều nhân bản, và toán tử đoản mạch hiểm hóc.", questionCount: 50, data: EXAM_SET_04_DATA },
+  { id: "SET_05", title: "Bộ Đề 05: ", description: "Khám phá ảo thuật Boolean, List Comprehension filter, File EOF và Class Scope.", questionCount: 50, data: EXAM_SET_05_DATA },
+  { id: "SET_06", title: "Bộ Đề 06: ", description: "50 câu hỏi tinh hoa kiểm tra Float Precision, MRO phức tạp và cạm bẫy Assert Tuple.", questionCount: 50, data: EXAM_SET_06_DATA }
 ];
 
 // Tất cả câu hỏi gom chung phục vụ Bookmark và Master Map
@@ -446,8 +446,8 @@ export default function App() {
   const [mockTimeRemaining, setMockTimeRemaining] = useState(3000);
 
   // Thông tin sinh viên UET
-  const [studentName, setStudentName] = useState('Sinh viên UET');
-  const [studentMSSV, setStudentMSSV] = useState('2302XXXX');
+  const [studentName, setStudentName] = useState('Em Kien vibe ra cai linh tinh nay');
+  const [studentMSSV, setStudentMSSV] = useState('25022299');
   const [studentTitle, setStudentTitle] = useState('Lập trình viên tập sự');
 
   // Đọc dữ liệu cá nhân từ LocalStorage (nếu có)
