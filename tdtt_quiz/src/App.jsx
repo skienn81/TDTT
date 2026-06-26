@@ -1159,7 +1159,7 @@ export default function App() {
                     UET-VNU Computational Thinking & Python
                   </span>
                   <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                    Hệ Sinh Thái Ôn Thi <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">COM1050 v9.1</span>
+                    Hệ Sinh Thái Ôn Thi Của Em Kiên <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">COM1050 v9.1</span>
                   </h2>
                   <p className="text-zinc-400 max-w-xl text-xs sm:text-sm leading-relaxed">
                     Trang ôn tập khổng lồ gồm 6 bộ đề (Tổng 300 câu hỏi) bao quát toàn bộ lý thuyết, thuật toán và cạm bẫy nâng cao của Python. Chạy độc lập và tương tác hiệu quả trên mọi thiết bị.
