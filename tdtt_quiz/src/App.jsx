@@ -864,7 +864,7 @@ export default function App() {
   const startCentralMockExam = () => {
   setCurrentExam({
     title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-    description: "Đề thi cấu trúc chuẩn UET: 40% Dễ, 40% Trung bình, 20% Khó lấy ngẫu nhiên từ ngân hàng 500 câu hỏi."
+    description: "Đề thi cấu trúc chuẩn UET: 30% Dễ, 50% Trung bình, 20% Khó lấy ngẫu nhiên từ ngân hàng 500 câu hỏi."
   });
 
   // Phân loại toàn bộ câu hỏi theo độ khó
@@ -875,9 +875,9 @@ export default function App() {
   // Hàm helper trộn ngẫu nhiên mảng (Fisher-Yates hoặc Sort đơn giản)
   const shuffle = (array) => [...array].sort(() => 0.5 - Math.random());
 
-  // Bốc đúng số lượng theo tỷ lệ 40% - 40% - 20% (Tổng số: 50 câu)
-  const selectedEasy = shuffle(easyPool).slice(0, 20);
-  const selectedMedium = shuffle(mediumPool).slice(0, 20);
+  // Bốc đúng số lượng theo tỷ lệ 30% - 50% - 20% (Tổng số: 50 câu)
+  const selectedEasy = shuffle(easyPool).slice(0, 15);
+  const selectedMedium = shuffle(mediumPool).slice(0, 25);
   const selectedHard = shuffle(hardPool).slice(0, 10);
 
   // Trộn tổng hợp lại toàn bộ 50 câu để độ khó đan xen ngẫu nhiên
@@ -1525,7 +1525,7 @@ if (!isActivated) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_50%)]" />
                 <div className="relative z-10 space-y-4">
                   <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold tracking-wider uppercase border border-emerald-500/20">
-                    UET-VNU Computational Thinking & Python
+                    UET-VNU TDTT
                   </span>
                   <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
                     Hệ Sinh Thái Ôn Thi Của Em Kiên <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">COM1050 v9.1</span>
@@ -1608,8 +1608,8 @@ if (!isActivated) {
       <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
         Đề thi được sinh ngẫu nhiên cấu trúc <span className="text-sky-400 font-bold">50 câu hỏi</span> từ kho dữ liệu 500 câu. Thuật toán kiểm soát nghiêm ngặt độ khó: 
         <br />
-        <span className="text-emerald-400 font-mono font-bold">40% Dễ</span> | 
-        <span className="text-amber-400 font-mono font-bold">40% Trung bình</span> | 
+        <span className="text-emerald-400 font-mono font-bold">30% Dễ</span> | 
+        <span className="text-amber-400 font-mono font-bold">50% Trung bình</span> | 
         <span className="text-rose-400 font-mono font-bold">20% Khó</span>.
       </p>
     </div>
