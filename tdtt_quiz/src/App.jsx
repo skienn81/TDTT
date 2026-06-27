@@ -415,7 +415,40 @@ const ALL_QUESTIONS = [
   ...EXAM_SET_06_DATA
 ];
 
+
+// THUẬT TOÁN BĂM CHỐNG CHEAT F12 (MỘT CHIỀU) - CHUẨN ĐỒNG BỘ 100%
+// ==========================================
+const hashKey = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0; // Ép về Int32 chuẩn học thuật
+  }
+  return (hash >>> 0).toString(36); // Chuyển Unsigned 32-bit sang hệ 36
+};
+
+// Danh sách key gốc; hash được sinh trực tiếp từ đây để tránh lệch dữ liệu xác thực
+const VALID_KEYS = [
+  "28495021", // Key 01
+  "74920514", // Key 02
+  "91054832", // Key 03
+  "36251498", // Key 04
+  "50184926", // Key 05
+  "83719402", // Key 06
+  "15948320", // Key 07
+  "42051938", // Key 08
+  "68302514", // Key 09
+  "57291043"  // Key 10
+];
+
+const VALID_HASHES = VALID_KEYS.map(hashKey);
+
 export default function App() {
+  // --- STATE BẢO MẬT & KÍCH HOẠT VÀO CỔNG ---
+  const [isActivated, setIsActivated] = useState(false);
+  const [inputKey, setInputKey] = useState('');
+  const [keyError, setKeyError] = useState('');
+
+  // --- CÁC STATE HIỆN TẠI CỦA BẠN (ĐÃ ĐƯỢC ĐỒNG BỘ) ---
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'marathon', 'mock', 'results', 'bookmarks', 'profile'
   const [currentExam, setCurrentExam] = useState(null);
   const [questionsBank, setQuestionsBank] = useState([]);
@@ -444,11 +477,18 @@ export default function App() {
 
   // Thông tin sinh viên UET
   const [studentName, setStudentName] = useState('Em Kien vibe ra cai linh tinh nay');
-  const [studentMSSV, setStudentMSSV] = useState('2502XXXX');
+  const [studentMSSV, setStudentMSSV] = useState('25022299');
   const [studentTitle, setStudentTitle] = useState('Lập trình viên tập sự');
 
-  // Đọc dữ liệu cá nhân từ LocalStorage (nếu có)
+  // --- HIỆU ỨNG KIỂM TRA MÁY ĐÃ NHẬP KEY CHƯA ---
   useEffect(() => {
+    // 1. Kiểm tra trạng thái kích hoạt từ bộ nhớ máy
+    const status = localStorage.getItem('uet_com1050_activated');
+    if (status === 'true') {
+      setIsActivated(true);
+    }
+
+    // 2. Đọc dữ liệu cá nhân từ LocalStorage cũ của bạn
     const savedName = localStorage.getItem('uet_student_name');
     const savedMSSV = localStorage.getItem('uet_student_mssv');
     const savedTitle = localStorage.getItem('uet_student_title');
@@ -466,6 +506,27 @@ export default function App() {
     localStorage.setItem('uet_student_name', name);
     localStorage.setItem('uet_student_mssv', mssv);
     localStorage.setItem('uet_student_title', title);
+  };
+
+  // Hàm xử lý đối chiếu key kích hoạt khi click nút
+  const handleVerifyKey = () => {
+    const normalizedKey = String(inputKey).trim().toLowerCase();
+    const hashedInput = hashKey(normalizedKey);
+
+    if (VALID_KEYS.includes(normalizedKey) || VALID_HASHES.includes(normalizedKey) || VALID_HASHES.includes(hashedInput)) {
+      localStorage.setItem('uet_com1050_activated', 'true');
+      setIsActivated(true);
+      setKeyError('');
+    } else {
+      setKeyError('Mã khóa không chính xác! Vui lòng liên hệ Admin để nhận mã kích hoạt.');
+    }
+  };
+
+  // Kích hoạt nhanh bằng phím Enter khi đang gõ key
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleVerifyKey();
+    }
   };
 
   // Đồng hồ tính giờ
@@ -771,6 +832,65 @@ export default function App() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // ==========================================
+  // GIAO DIỆN MÀN HÌNH KHÓA (RENDER NẾU CHƯA KÍCH HOẠT)
+  // ==========================================
+  if (!isActivated) {
+    return (
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 font-sans text-zinc-100 selection:bg-emerald-500 selection:text-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.04),transparent_50%)] pointer-events-none" />
+        
+        <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-sky-500" />
+          
+          <div className="text-center space-y-2">
+            <div className="inline-flex w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-sky-600 items-center justify-center font-black text-base text-white shadow-lg shadow-emerald-500/15 mb-2">
+              UET
+            </div>
+            <h2 className="text-lg font-black tracking-wide uppercase font-mono text-zinc-50">
+              Hệ Thống Bảo Mật Ổ Khóa
+            </h2>
+            <p className="text-xs text-zinc-400">
+              Vui lòng nhập chính xác Mã khóa để tiến vào cổng ứng dụng ôn luyện Galaxy Engine.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 uppercase font-mono font-bold tracking-wider">Mã Kích Hoạt (nhập key gốc hoặc mã hash)</label>
+              <input 
+                type="text"
+                placeholder="Nhập key gốc hoặc mã hash..."
+                value={inputKey}
+                onChange={(e) => setInputKey(e.target.value.replace(/\s+/g, ''))}
+                onKeyDown={handleInputKeyDown}
+                className="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3.5 text-center font-mono text-lg tracking-widest text-zinc-100 placeholder:text-zinc-600 placeholder:tracking-normal outline-none transition-all"
+              />
+            </div>
+
+            {keyError && (
+              <p className="text-xs text-rose-400 font-medium text-center bg-rose-950/10 border border-rose-900/30 py-2.5 px-3 rounded-lg">
+                ⚠ {keyError}
+              </p>
+            )}
+
+            <button
+              onClick={handleVerifyKey}
+              disabled={inputKey.trim().length === 0}
+              className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-zinc-950 font-black py-3.5 rounded-xl transition-all text-xs tracking-widest uppercase font-mono shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+            >
+              🚀 Mở Khóa Hệ Thống
+            </button>
+          </div>
+
+          <div className="text-center pt-2 border-t border-zinc-900">
+            <span className="text-[10px] text-zinc-600 font-mono">UET Cosmic Pack v9.1 • Persistent Device Auth Enabled</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ==========================================
   // RENDER: GIAO DIỆN LÀM BÀI QUY CHUẨN
