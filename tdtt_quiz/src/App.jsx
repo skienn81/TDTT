@@ -890,7 +890,7 @@ export default function App() {
   setIsAnswerSubmitted(false);
   setAnswersState({});
   setTimer(0);
-  setMockTimeRemaining(5400); // 90 phút chuẩn thi cử UET
+  setMockTimeRemaining(3600); // 60 phút chuẩn thi cử UET
   setIsTimerRunning(true);
   setMockActive(true);
 };
@@ -1617,7 +1617,7 @@ if (!isActivated) {
       onClick={startCentralMockExam}
       className="bg-gradient-to-r from-sky-500 via-blue-600 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-zinc-950 font-black px-12 py-4 rounded-2xl transition-all text-xs tracking-widest uppercase shadow-[0_0_30px_rgba(56,189,248,0.2)] hover:shadow-[0_0_40px_rgba(56,189,248,0.4)] transform hover:-translate-y-0.5 active:translate-y-0 font-mono"
     >
-      ⚡ BẮT ĐẦU THI THỬ TOÀN DIỆN (90 PHÚT) ⚡
+      ⚡ BẮT ĐẦU THI THỬ TOÀN DIỆN (60 PHÚT) ⚡
     </button>
   </div>
 </div>
