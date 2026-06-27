@@ -1227,8 +1227,8 @@ if (!isActivated) {
               UET
             </div>
             <div>
-              <h1 className="font-bold text-zinc-50 tracking-wide text-xs sm:text-sm md:text-base">COM1050 - Galaxy Engine</h1>
-              <p className="text-[10px] text-emerald-400 font-mono font-bold">UET v9.1 Cosmic Pack</p>
+              <h1 className="font-bold text-zinc-50 tracking-wide text-xs sm:text-sm md:text-base">COM1050 - TDTT</h1>
+              <p className="text-[10px] text-emerald-400 font-mono font-bold"> v9.1 </p>
             </div>
           </div>
 
