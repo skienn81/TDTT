@@ -508,6 +508,7 @@ export default function App() {
     localStorage.setItem('uet_student_title', title);
   };
 
+ 
   // Hàm xử lý đối chiếu key kích hoạt khi click nút
   const handleVerifyKey = () => {
     const normalizedKey = String(inputKey).trim().toLowerCase();
@@ -518,6 +519,7 @@ export default function App() {
       setIsActivated(true);
       setKeyError('');
     } else {
+      // Cập nhật thông báo lỗi thân thiện hơn
       setKeyError('Mã khóa không chính xác! Vui lòng liên hệ Admin để nhận mã kích hoạt.');
     }
   };
@@ -836,9 +838,9 @@ export default function App() {
   // ==========================================
   // GIAO DIỆN MÀN HÌNH KHÓA (RENDER NẾU CHƯA KÍCH HOẠT)
   // ==========================================
-  if (!isActivated) {
+if (!isActivated) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 font-sans text-zinc-100 selection:bg-emerald-500 selection:text-black">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 font-sans text-zinc-100 selection:bg-emerald-500 selection:text-black relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.04),transparent_50%)] pointer-events-none" />
         
         <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
@@ -888,10 +890,19 @@ export default function App() {
             <span className="text-[10px] text-zinc-600 font-mono">UET Cosmic Pack v9.1 • Persistent Device Auth Enabled</span>
           </div>
         </div>
+
+        {/* --- NÚT LIÊN HỆ ADMIN ĐƯỢC CHÈN CỐ ĐỊNH Ở ĐÂY --- */}
+        <a 
+          href="https://www.facebook.com/ng.the.kien0817" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="fixed bottom-5 right-5 bg-zinc-950 text-emerald-400 border border-emerald-500/50 hover:border-emerald-400 px-5 py-2.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all duration-300 z-50"
+        >
+          💬 Liên hệ ADMIN
+        </a>
       </div>
     );
   }
-
   // ==========================================
   // RENDER: GIAO DIỆN LÀM BÀI QUY CHUẨN
   // ==========================================
