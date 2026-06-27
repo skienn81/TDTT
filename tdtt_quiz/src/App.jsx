@@ -898,6 +898,22 @@ export default function App() {
   const handleMockSubmit = () => {
     setIsTimerRunning(false);
     setMockActive(false);
+    
+    // Ghi nhận các câu chưa làm thành sai (selected: null) để có thể xem lại giải thích
+    setAnswersState(prev => {
+      const finalState = { ...prev };
+      questionsBank.forEach(q => {
+        if (!finalState[q.id]) {
+          finalState[q.id] = { 
+            selected: null, 
+            isCorrect: false, 
+            bookmarked: globalBookmarks[q.id] || false 
+          };
+        }
+      });
+      return finalState;
+    });
+
     setActiveTab('results');
   };
 
@@ -963,6 +979,7 @@ export default function App() {
     } else if (!mockActive) {
       setIsTimerRunning(false);
       setActiveTab('results');
+      setIsAnswerSubmitted(true);
     }
   };
 
@@ -974,6 +991,7 @@ export default function App() {
       setSelectedOption(saved ? saved.selected : null);
       setIsAnswerSubmitted(!!saved);
       setShowHint(false);
+      setIsAnswerSubmitted(true);
     }
   };
 
@@ -1212,10 +1230,9 @@ if (!isActivated) {
                     key={q.id}
                     onClick={() => {
                       setCurrentQuestionIdx(q.originalIndex);
-                      const saved = answersState[q.id];
-                      setSelectedOption(saved ? saved.selected : null);
-                      setIsAnswerSubmitted(mockActive ? false : !!saved);
-                      setShowHint(false);
+                      setSelectedOption(answersState[questionsBank[q.originalIndex].id]?.selected || null);
+
+                      if (!mockActive) setIsAnswerSubmitted(true);
                     }}
                     className={`h-9 w-full rounded-lg border text-xs font-mono transition-all flex items-center justify-center relative ${btnStyle}`}
                   >
@@ -1405,20 +1422,6 @@ if (!isActivated) {
             {/* GIẢI THÍCH CHI TIẾT SAU KHI SUBMIT CHẾ ĐỘ MARATHON */}
             {isAnswerSubmitted && !mockActive && (
               <div className="mt-6 pt-6 border-t border-zinc-800 space-y-4 animate-slideUp">
-                <div className="flex items-center gap-2.5">
-                  {selectedOption === question.correctAnswer ? (
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold">✓</div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center font-bold">✗</div>
-                  )}
-                  <div>
-                    <h3 className={`font-black text-sm uppercase tracking-wider ${selectedOption === question.correctAnswer ? 'text-emerald-400 animate-pulse' : 'text-rose-400'}`}>
-                      {selectedOption === question.correctAnswer ? 'ĐÁP ÁN CHÍNH XÁC! (+100 XP)' : 'HƠI TIẾC MỘT CHÚT, HÃY ĐỌC KỸ LÝ THUYẾT!'}
-                    </h3>
-                    <p className="text-zinc-500 text-xs mt-0.5">Phân tích logic lập trình Python chuẩn CPython</p>
-                  </div>
-                </div>
-
                 <div className="p-5 bg-zinc-900/20 rounded-2xl border border-zinc-900 text-xs sm:text-sm leading-relaxed space-y-3">
                   <div className="flex items-start gap-2.5">
                     <Icons.Info />
@@ -1668,77 +1671,62 @@ if (!isActivated) {
             TAB: KẾT QUẢ THI THỬ (RESULTS)
            ========================================== */}
         {activeTab === 'results' && (
-          <div className="space-y-8 max-w-4xl mx-auto animate-slideUp">
-            <div className="relative rounded-3xl overflow-hidden border border-zinc-800 bg-gradient-to-b from-zinc-950 to-zinc-900 p-8 sm:p-12 text-center shadow-2xl animate-fadeIn">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-sky-500" />
-              <div className="max-w-md mx-auto space-y-6">
-                <div className="flex justify-center">
-                  <Icons.Trophy />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl sm:text-3xl font-black text-white">Luyện tập Hoàn Tất!</h2>
-                  <p className="text-zinc-400 text-xs sm:text-sm">Hệ thống đã ghi nhận toàn bộ kết quả của bạn cho {currentExam?.title}.</p>
-                </div>
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto text-center space-y-8 shadow-xl animate-fadeIn">
+            <div className="inline-flex p-4 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-2xl">
+              <Icons.Trophy />
+            </div>
+            
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">KẾT QUẢ THI THỬ</h2>
+              <p className="text-sm text-zinc-400 font-medium">{currentExam?.title}</p>
+            </div>
 
-                <div className="grid grid-cols-3 gap-4 py-4">
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl">
-                    <span className="block text-2xl font-black text-emerald-400 font-mono">{resultsMetrics.correct}</span>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Chính xác</span>
-                  </div>
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl">
-                    <span className="block text-2xl font-black text-rose-400 font-mono">{resultsMetrics.wrong}</span>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Bị Sai</span>
-                  </div>
-                  <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl">
-                    <span className="block text-xl font-black text-sky-400 font-mono">{resultsMetrics.unanswered}</span>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Bỏ qua</span>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-900/30 border border-zinc-800 p-4 rounded-xl text-xs flex justify-between text-zinc-400">
-                  <span>Tổng thời gian thực hiện:</span>
-                  <span className="font-mono text-zinc-200 font-bold">{formatTime(timer)}</span>
-                </div>
+            {/* VÙNG ĐIỂM SỐ & THÔNG TIN */}
+            <div className="grid grid-cols-2 gap-4 bg-zinc-900/40 border border-zinc-800/80 p-6 rounded-2xl">
+              <div className="text-center space-y-1">
+                <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Số câu đúng</p>
+                <p className="text-2xl font-black text-emerald-400">
+                  {Object.values(answersState).filter(a => a.isCorrect).length} <span className="text-xs text-zinc-600 font-normal">/ {questionsBank.length}</span>
+                </p>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Tỷ lệ chính xác</p>
+                <p className="text-2xl font-black text-sky-400">
+                  {questionsBank.length > 0 
+                    ? Math.round((Object.values(answersState).filter(a => a.isCorrect).length / questionsBank.length) * 100) 
+                    : 0}%
+                </p>
               </div>
             </div>
 
-            {/* PHÂN TÍCH THEO CHỦ ĐỀ */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Icons.Brain />
-                <span>Hiệu Suất Theo Chủ Đề</span>
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(resultsMetrics.topicStats).map(([topic, stats], idx) => {
-                  const percent = Math.round((stats.correct / stats.total) * 100) || 0;
-                  let barColor = 'bg-rose-500';
-                  if (percent >= 80) barColor = 'bg-emerald-500';
-                  else if (percent >= 50) barColor = 'bg-amber-500';
+            {/* MỐC COPY-PASTE: CỤM NÚT ĐIỀU HƯỚNG MỚI ĐÃ THÊM LÈNH XEM LẠI BÀI THI */}
+            <div className="flex justify-center flex-wrap gap-4 pt-4">
+              <button
+                onClick={() => {
+                  setActiveTab('mock'); // Chuyển về vùng giao diện làm bài thi thử
+                  setMockActive(false); // Dừng đồng hồ đếm ngược
+                  setCurrentQuestionIdx(0); // Đặt con trỏ về câu số 1
                   
-                  return (
-                    <div key={idx} className="space-y-2 bg-zinc-900/20 p-3.5 rounded-xl border border-zinc-900">
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="font-bold text-zinc-300 truncate max-w-[200px] block" title={topic}>{topic}</span>
-                        <span className="font-semibold text-zinc-400 shrink-0 font-mono">{stats.correct}/{stats.total} ({percent}%)</span>
-                      </div>
-                      <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden">
-                        <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${percent}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                  // Lấy trạng thái của câu đầu tiên lên UI
+                  const firstQ = questionsBank[0];
+                  setSelectedOption(answersState[firstQ?.id]?.selected ?? null);
+                  
+                  // LỆNH QUAN TRỌNG: Cưỡng chế kích hoạt chế độ xem đáp án/giải thích
+                  setIsAnswerSubmitted(true); 
+                }}
+                className="bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black px-6 py-3 rounded-xl transition-all shadow-lg text-xs tracking-wider uppercase"
+              >
+                Xem Lại Bài Thi
+              </button>
 
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={() => startMarathon(currentExam)}
+              <button
+                onClick={() => startCentralMockExam()}
                 className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black px-6 py-3 rounded-xl transition-all shadow-lg text-xs tracking-wider uppercase"
               >
-                Làm Lại Đề Này
+                Làm Đề Khác
               </button>
-              <button 
+
+              <button
                 onClick={() => setActiveTab('home')}
                 className="bg-zinc-900 hover:bg-zinc-800 text-zinc-100 font-bold px-6 py-3 rounded-xl border border-zinc-800 transition-all text-xs tracking-wider uppercase"
               >
