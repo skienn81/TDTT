@@ -943,6 +943,14 @@ export default function App() {
     localStorage.removeItem('uet_bookmarks_v9');
   }
 };
+
+  useEffect(() => {
+  if (questionsBank.length > 0) {
+    setCurrentQuestionIdx(0);
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+  }
+}, [questionsBank]); // Lắng nghe mỗi khi mảng câu hỏi mới được trộn xong
     // Tự động lưu Bookmark vào máy mỗi khi người dùng nhấn nút Bookmark
   useEffect(() => {
     localStorage.setItem('uet_bookmarks_v9', JSON.stringify(globalBookmarks));
@@ -1106,9 +1114,18 @@ export default function App() {
     setMockActive(false);
   };
 
-    const startCentralMockExam = () => {
-    // Hàm xáo trộn Fisher-Yates
-    const shuffle = (array) => {
+    // 0. KHAI BÁO CẤU HÌNH CỐ ĐỊNH (Đã bọc sẵn biến tránh lỗi "not defined")
+  const EXAM_CONFIG = { easy: 10, medium: 20, hard: 20, total: 50 };
+  const MAX_EXAMS_PER_CYCLE = 3; 
+  const QUESTIONS_PER_EXAM = EXAM_CONFIG.easy + EXAM_CONFIG.medium + EXAM_CONFIG.hard; // 50 câu
+  const MAX_ALLOWED_USED_IDS = MAX_EXAMS_PER_CYCLE * QUESTIONS_PER_EXAM; // 150 câu
+
+  const startCentralMockExam = () => {
+    // 0. CẤU HÌNH SỐ LƯỢNG ĐỀ (10 Dễ - 20 Trung bình - 20 Khó = 50 câu chuẩn UET)
+    const EXAM_CONFIG = { easy: 10, medium: 20, hard: 20, total: 50 };
+
+    // 1. Hàm xáo trộn Fisher-Yates chuẩn (Không dùng thư viện ngoài)
+    const shuffleArray = (array) => {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -1117,46 +1134,62 @@ export default function App() {
       return arr;
     };
 
-    // BƯỚC 1: Lọc bỏ các câu hỏi ĐÃ SỬ DỤNG từ CLEAN_POOL
-    const availablePool = CLEAN_POOL.filter(q => !usedQuestionIds.has(q.id));
+    // 2. Tạo tính ngẫu nhiên nền bằng cách đảo tung kho câu hỏi gốc
+    const randomizedRawPool = shuffleArray(CLEAN_POOL);
 
-    // BƯỚC 2: Phân loại theo độ khó từ ngân hàng "còn lại"
-    const pools = {
-      easy: availablePool.filter(q => q.difficulty === "Dễ"),
-      medium: availablePool.filter(q => q.difficulty === "Trung bình"),
-      hard: availablePool.filter(q => q.difficulty === "Khó")
-    };
+    // 3. Khởi tạo kho đệm toàn cục bằng CHUỖI VĂN BẢN (Phá tan hoàn toàn phụ thuộc ID)
+    if (!window.usedQuestionsCache) {
+      window.usedQuestionsCache = new Set();
+    }
+    const currentUsedQuestions = window.usedQuestionsCache;
 
-    // BƯỚC 3: Kiểm tra điều kiện biên (Edge Case)
-    if (
-      pools.easy.length < EXAM_CONFIG.easy ||
-      pools.medium.length < EXAM_CONFIG.medium ||
-      pools.hard.length < EXAM_CONFIG.hard
-    ) {
-      const reset = window.confirm("⚠️ Ngân hàng câu hỏi mới đã cạn! Bạn có muốn reset lại lịch sử để bắt đầu bộ đề mới không?");
-      if (reset) setUsedQuestionIds(new Set());
-      return; 
+    // 4. Phân loại độ khó từ toàn bộ kho gốc trước khi lọc
+    const allEasy = randomizedRawPool.filter(q => q.difficulty === "Dễ");
+    const allMedium = randomizedRawPool.filter(q => q.difficulty === "Trung bình");
+    const allHard = randomizedRawPool.filter(q => q.difficulty === "Khó");
+
+    // 5. Lọc bỏ các câu đã dùng dựa trên NỘI DUNG VĂN BẢN CHUẨN HÓA (.trim())
+    let availableEasy = allEasy.filter(q => !currentUsedQuestions.has(q.question.trim()));
+    let availableMedium = allMedium.filter(q => !currentUsedQuestions.has(q.question.trim()));
+    let availableHard = allHard.filter(q => !currentUsedQuestions.has(q.question.trim()));
+
+    // 6. CHU KỲ RESET ĐỘC LẬP: Kho nào hết câu mới, tự giải phóng riêng kho đó để cày sạch kho khác
+    if (availableEasy.length < EXAM_CONFIG.easy) {
+      allEasy.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
+      availableEasy = allEasy;
+      console.log("🔄 [HỆ THỐNG]: Kho Dễ đã cạn câu mới, tự động xoay vòng độc lập!");
+    }
+    if (availableMedium.length < EXAM_CONFIG.medium) {
+      allMedium.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
+      availableMedium = allMedium;
+      console.log("🔄 [HỆ THỐNG]: Kho Trung bình đã cạn câu mới, tự động xoay vòng độc lập!");
+    }
+    if (availableHard.length < EXAM_CONFIG.hard) {
+      allHard.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
+      availableHard = allHard;
+      console.log("🔄 [HỆ THỐNG]: Kho Khó đã cạn câu mới, tự động xoay vòng độc lập!");
     }
 
-    // BƯỚC 4: Bốc câu hỏi ngẫu nhiên theo đúng tỉ lệ
-    const selectedEasy = shuffle(pools.easy).slice(0, EXAM_CONFIG.easy);
-    const selectedMedium = shuffle(pools.medium).slice(0, EXAM_CONFIG.medium);
-    const selectedHard = shuffle(pools.hard).slice(0, EXAM_CONFIG.hard);
+    // 7. BỐC CÂU HỎI: Lấy trực tiếp các phần tử đầu mảng đã được đảo ngẫu nhiên
+    const selectedEasy = availableEasy.slice(0, EXAM_CONFIG.easy);
+    const selectedMedium = availableMedium.slice(0, EXAM_CONFIG.medium);
+    const selectedHard = availableHard.slice(0, EXAM_CONFIG.hard);
 
-    // BƯỚC 5: Trộn tổng hợp 50 câu cuối cùng
-    const finalMockQuestions = shuffle([...selectedEasy, ...selectedMedium, ...selectedHard]);
+    // 8. TRỘN TỔNG HỢP: Đảo lộn vị trí câu hỏi lần cuối trước khi xuất bản đề thi
+    const finalMockQuestions = shuffleArray([...selectedEasy, ...selectedMedium, ...selectedHard]);
 
-    // BƯỚC 6: Cập nhật danh sách "Đã dùng" để lần sau không trùng
-    const newUsedIds = new Set(usedQuestionIds);
-    finalMockQuestions.forEach(q => newUsedIds.add(q.id));
-    setUsedQuestionIds(newUsedIds);
+    // 9. ĐỒNG BỘ LỊCH SỬ CHẶN TRÙNG BẰNG CHỮ CHO LƯỢT SAU
+    finalMockQuestions.forEach(q => window.usedQuestionsCache.add(q.question.trim()));
+    if (typeof setUsedQuestionIds === 'function') {
+      setUsedQuestionIds(new Set(window.usedQuestionsCache));
+    }
 
-    // BƯỚC 7: Cập nhật các trạng thái UI của bạn
+    // 10. CẬP NHẬT TRẠNG THÁI GIAO DIỆN (UI STATES)
     setCurrentExam({
       title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-      description: "Đề thi cấu trúc chuẩn UET: 50 câu (20% Dễ, 40% Trung bình, 40% Khó) - KHÔNG TRÙNG LẶP."
+      description: "Đề thi cấu trúc chuẩn UET: 50 câu - Hệ thống lọc chữ chặn trùng tuyệt đối."
     });
-    setQuestionsBank(finalMockQuestions);
+    setQuestionsBank(finalMockQuestions); 
     setActiveTab('mock');
     setCurrentQuestionIdx(0);
     setSelectedOption(null);
@@ -1166,6 +1199,10 @@ export default function App() {
     setMockTimeRemaining(3600);
     setIsTimerRunning(true);
     setMockActive(true);
+
+    console.log("🔥 [DEBUG]: Kích thước kho câu hỏi chữ đã khóa gối đầu:", window.usedQuestionsCache.size);
+    // In thẳng ra màn hình Console 5 nội dung câu hỏi đầu tiên của ĐỀ MỚI VỪA TRỘN
+console.log("👉 5 CÂU ĐẦU TIÊN CỦA ĐỀ MỚI TRÊN RAM:", randomizedRawPool.slice(0, 5).map(q => q.question));
   };
 
   const handleMockSubmit = () => {
@@ -1499,28 +1536,22 @@ if (!isActivated) {
                 }
 
                 return (
-  <button
-    key={q.id}
-    onClick={() => {
-      const targetQ = questionsBank[q.originalIndex];
-      const savedState = answersState[targetQ.id];
-      
-      setCurrentQuestionIdx(q.originalIndex);
-      setSelectedOption(savedState ? savedState.selected : null);
-      
-      // Đồng bộ trạng thái nộp bài dựa trên lịch sử lưu trữ thực tế của câu hỏi đó
-      if (mockActive) {
-        setIsAnswerSubmitted(false); // Nếu đang thi thử thì chưa xem kết quả câu này
-      } else {
-        // Nếu ở chế độ Marathon hoặc đang xem lại bài thi thử đã kết thúc (activeTab === 'mock' && !mockActive)
-        setIsAnswerSubmitted(savedState ? true : false);
-      }
-    }}
-    className={`h-9 w-full rounded-lg border text-xs font-mono transition-all flex items-center justify-center relative ${btnStyle}`}
-  >
-    {q.originalIndex + 1}
-  </button>
-);
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      setCurrentQuestionIdx(q.originalIndex);
+                      setSelectedOption(answersState[questionsBank[q.originalIndex].id]?.selected || null);
+
+                      if (!mockActive) setIsAnswerSubmitted(true);
+                    }}
+                    className={`h-9 w-full rounded-lg border text-xs font-mono transition-all flex items-center justify-center relative ${btnStyle}`}
+                  >
+                    {q.originalIndex + 1}
+                    {isBookmarked && (
+                      <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-sky-400 rounded-full" />
+                    )}
+                  </button>
+                );
               })}
             </div>
 
