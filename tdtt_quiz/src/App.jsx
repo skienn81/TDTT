@@ -1920,3 +1920,10 @@ if (!isActivated) {
     </div>
   );
 }
+// Bắt lỗi toàn cục khi trình duyệt không tìm thấy file asset cũ (do ông vừa deploy bản mới)
+window.addEventListener('error', (e) => {
+  if (e.message.includes('Failed to fetch dynamically imported module') || e.message.includes('ChunkLoadError')) {
+    // Tự động F5 giùm khách hàng luôn, không cần hỏi!
+    window.location.reload(); 
+  }
+}, true);
