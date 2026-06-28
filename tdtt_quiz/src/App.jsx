@@ -1884,9 +1884,9 @@ if (!isActivated) {
       <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
         Đề thi được sinh ngẫu nhiên cấu trúc <span className="text-sky-400 font-bold">50 câu hỏi</span> từ kho dữ liệu 500 câu. Thuật toán kiểm soát nghiêm ngặt độ khó: 
         <br />
-        <span className="text-emerald-400 font-mono font-bold">30% Dễ</span> | 
-        <span className="text-amber-400 font-mono font-bold">50% Trung bình</span> | 
-        <span className="text-rose-400 font-mono font-bold">20% Khó</span>.
+        <span className="text-emerald-400 font-mono font-bold">20% Dễ</span> | 
+        <span className="text-amber-400 font-mono font-bold">40% Trung bình</span> | 
+        <span className="text-rose-400 font-mono font-bold">40% Khó</span>.
       </p>
     </div>
     <button 
