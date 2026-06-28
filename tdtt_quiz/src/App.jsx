@@ -1121,10 +1121,15 @@ export default function App() {
   const MAX_ALLOWED_USED_IDS = MAX_EXAMS_PER_CYCLE * QUESTIONS_PER_EXAM; // 150 câu
 
   const startCentralMockExam = () => {
-    // 0. CẤU HÌNH SỐ LƯỢNG ĐỀ (10 Dễ - 20 Trung bình - 20 Khó = 50 câu chuẩn UET)
-    const EXAM_CONFIG = { easy: 10, medium: 20, hard: 20, total: 50 };
+    // 0. CẤU HÌNH ĐỘNG: Tổng đề = 50 câu. Cài trần tối đa (Giới hạn trên) cho từng loại câu
+    const TOTAL_QUESTIONS_NEEDED = 50;
+    const LIMITS = {
+      easy: 25,    // Một đề tối đa không quá 25 câu Dễ
+      medium: 25,  // Một đề tối đa không quá 25 câu Trung bình
+      hard: 20     // Một đề tối đa không quá 20 câu Khó
+    };
 
-    // 1. Hàm xáo trộn Fisher-Yates chuẩn (Không dùng thư viện ngoài)
+    // 1. Hàm xáo trộn Fisher-Yates chuẩn
     const shuffleArray = (array) => {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -1134,62 +1139,70 @@ export default function App() {
       return arr;
     };
 
-    // 2. Tạo tính ngẫu nhiên nền bằng cách đảo tung kho câu hỏi gốc
+    // 2. Tạo ngẫu nhiên nền bằng cách đảo tung kho gốc
     const randomizedRawPool = shuffleArray(CLEAN_POOL);
 
-    // 3. Khởi tạo kho đệm toàn cục bằng CHUỖI VĂN BẢN (Phá tan hoàn toàn phụ thuộc ID)
+    // 3. Khởi tạo kho đệm lưu câu hỏi ĐÃ DÙNG bằng nội dung chữ
     if (!window.usedQuestionsCache) {
       window.usedQuestionsCache = new Set();
     }
-    const currentUsedQuestions = window.usedQuestionsCache;
 
-    // 4. Phân loại độ khó từ toàn bộ kho gốc trước khi lọc
-    const allEasy = randomizedRawPool.filter(q => q.difficulty === "Dễ");
-    const allMedium = randomizedRawPool.filter(q => q.difficulty === "Trung bình");
-    const allHard = randomizedRawPool.filter(q => q.difficulty === "Khó");
+    // 4. LỌC CÂU HỎI MỚI TINH CHƯA TỪNG LÀM TRÊN TOÀN HỆ THỐNG
+    let freshQuestions = randomizedRawPool.filter(q => !window.usedQuestionsCache.has(q.question.trim()));
 
-    // 5. Lọc bỏ các câu đã dùng dựa trên NỘI DUNG VĂN BẢN CHUẨN HÓA (.trim())
-    let availableEasy = allEasy.filter(q => !currentUsedQuestions.has(q.question.trim()));
-    let availableMedium = allMedium.filter(q => !currentUsedQuestions.has(q.question.trim()));
-    let availableHard = allHard.filter(q => !currentUsedQuestions.has(q.question.trim()));
-
-    // 6. CHU KỲ RESET ĐỘC LẬP: Kho nào hết câu mới, tự giải phóng riêng kho đó để cày sạch kho khác
-    if (availableEasy.length < EXAM_CONFIG.easy) {
-      allEasy.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
-      availableEasy = allEasy;
-      console.log("🔄 [HỆ THỐNG]: Kho Dễ đã cạn câu mới, tự động xoay vòng độc lập!");
-    }
-    if (availableMedium.length < EXAM_CONFIG.medium) {
-      allMedium.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
-      availableMedium = allMedium;
-      console.log("🔄 [HỆ THỐNG]: Kho Trung bình đã cạn câu mới, tự động xoay vòng độc lập!");
-    }
-    if (availableHard.length < EXAM_CONFIG.hard) {
-      allHard.forEach(q => window.usedQuestionsCache.delete(q.question.trim()));
-      availableHard = allHard;
-      console.log("🔄 [HỆ THỐNG]: Kho Khó đã cạn câu mới, tự động xoay vòng độc lập!");
+    // 5. PHÒNG VỆ HỆ THỐNG (EDGE CASE): Nếu tổng số câu mới còn lại trong toàn kho < 50 câu
+    if (freshQuestions.length < TOTAL_QUESTIONS_NEEDED) {
+      window.usedQuestionsCache = new Set(); // Reset sạch sẽ toàn bộ kho để bắt đầu vòng đời mới
+      freshQuestions = randomizedRawPool;    // Nạp lại toàn bộ kho câu hỏi gốc
+      console.log("🔄 [HỆ THỐNG]: Ngân hàng đã cạn kiệt câu hỏi mới. Tự động làm sạch để bắt đầu chu kỳ mới!");
     }
 
-    // 7. BỐC CÂU HỎI: Lấy trực tiếp các phần tử đầu mảng đã được đảo ngẫu nhiên
-    const selectedEasy = availableEasy.slice(0, EXAM_CONFIG.easy);
-    const selectedMedium = availableMedium.slice(0, EXAM_CONFIG.medium);
-    const selectedHard = availableHard.slice(0, EXAM_CONFIG.hard);
+    // 6. THUẬT TOÁN BỐC ĐỀ ĐỘNG THEO GIỚI HẠN TRẦN
+    let finalMockQuestions = [];
+    let counters = { easy: 0, medium: 0, hard: 0 };
 
-    // 8. TRỘN TỔNG HỢP: Đảo lộn vị trí câu hỏi lần cuối trước khi xuất bản đề thi
-    const finalMockQuestions = shuffleArray([...selectedEasy, ...selectedMedium, ...selectedHard]);
+    for (let q of freshQuestions) {
+      if (finalMockQuestions.length >= TOTAL_QUESTIONS_NEEDED) break;
 
-    // 9. ĐỒNG BỘ LỊCH SỬ CHẶN TRÙNG BẰNG CHỮ CHO LƯỢT SAU
+      // Phân loại và kiểm tra xem có vượt quá giới hạn trần của dạng câu đó không
+      if (q.difficulty === "Dễ" && counters.easy < LIMITS.easy) {
+        finalMockQuestions.push(q);
+        counters.easy++;
+      } else if (q.difficulty === "Trung bình" && counters.medium < LIMITS.medium) {
+        finalMockQuestions.push(q);
+        counters.medium++;
+      } else if (q.difficulty === "Khó" && counters.hard < LIMITS.hard) {
+        finalMockQuestions.push(q);
+        counters.hard++;
+      }
+    }
+
+    // 7. BÙ CÂU HỎI (BẢO VỆ CHẶT CHẼ): Nếu dồn dịch quá chặt mà chưa đủ 50 câu do lệch kho
+    if (finalMockQuestions.length < TOTAL_QUESTIONS_NEEDED) {
+      for (let q of freshQuestions) {
+        if (finalMockQuestions.length >= TOTAL_QUESTIONS_NEEDED) break;
+        // Nếu câu hỏi này chưa được bốc ở bước trên, bốc nốt vào đề cho đủ 50 câu
+        if (!finalMockQuestions.some(selected => selected.question.trim() === q.question.trim())) {
+          finalMockQuestions.push(q);
+        }
+      }
+    }
+
+    // 8. TRỘN TỔNG HỢP: Đảo lộn vị trí câu hỏi lần cuối trước khi xuất bản
+    finalMockQuestions = shuffleArray(finalMockQuestions);
+
+    // 9. ĐỒNG BỘ LỊCH SỬ CHẶN TRÙNG CHO CÁC LƯỢT SAU
     finalMockQuestions.forEach(q => window.usedQuestionsCache.add(q.question.trim()));
     if (typeof setUsedQuestionIds === 'function') {
       setUsedQuestionIds(new Set(window.usedQuestionsCache));
     }
 
-    // 10. CẬP NHẬT TRẠNG THÁI GIAO DIỆN (UI STATES)
+    // 10. CẬP NHẬT TRẠNG THÁI GIAO DIỆN UI
     setCurrentExam({
       title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-      description: "Đề thi cấu trúc chuẩn UET: 50 câu - Hệ thống lọc chữ chặn trùng tuyệt đối."
+      description: `Cấu trúc động chuẩn UET: 50 câu. (Dễ max ${counters.easy}, TB max ${counters.medium}, Khó max ${counters.hard}) - KHÔNG TRÙNG LẶP.`
     });
-    setQuestionsBank(finalMockQuestions); 
+    setQuestionsBank(finalMockQuestions);
     setActiveTab('mock');
     setCurrentQuestionIdx(0);
     setSelectedOption(null);
@@ -1200,9 +1213,8 @@ export default function App() {
     setIsTimerRunning(true);
     setMockActive(true);
 
-    console.log("🔥 [DEBUG]: Kích thước kho câu hỏi chữ đã khóa gối đầu:", window.usedQuestionsCache.size);
-    // In thẳng ra màn hình Console 5 nội dung câu hỏi đầu tiên của ĐỀ MỚI VỪA TRỘN
-console.log("👉 5 CÂU ĐẦU TIÊN CỦA ĐỀ MỚI TRÊN RAM:", randomizedRawPool.slice(0, 5).map(q => q.question));
+    console.log(`🔥 [DEBUG] Đã bốc thành công: ${counters.easy} Dễ, ${counters.medium} Trung bình, ${counters.hard} Khó.`);
+    console.log("📊 Kích thước kho câu hỏi chữ đã dùng tích lũy:", window.usedQuestionsCache.size);
   };
 
   const handleMockSubmit = () => {
