@@ -635,6 +635,15 @@ const ALL_QUESTIONS = [
   ...EXAM_SET_09_DATA,
   ...EXAM_SET_10_DATA
 ];
+// ... sau ALL_QUESTIONS ...
+
+// 1. Cấu hình tỉ lệ đề thi
+const EXAM_CONFIG = { easy: 15, medium: 25, hard: 10, total: 50 };
+
+// 2. Làm sạch dữ liệu một lần duy nhất tại đây (Tối ưu hiệu năng)
+const CLEAN_POOL = Array.from(
+  new Map(ALL_QUESTIONS.map(q => [q.question.trim(), q])).values()
+);
 
 
 // THUẬT TOÁN BĂM CHỐNG CHEAT F12 (MỘT CHIỀU) - CHUẨN ĐỒNG BỘ 100%
@@ -700,6 +709,8 @@ export default function App() {
   const [studentName, setStudentName] = useState('Em Kien vibe ra cai linh tinh nay');
   const [studentMSSV, setStudentMSSV] = useState('25022299');
   const [studentTitle, setStudentTitle] = useState('Lập trình viên tập sự');
+    // Thêm dòng này để lưu danh sách ID các câu hỏi đã dùng
+  const [usedQuestionIds, setUsedQuestionIds] = useState(new Set());
 
   // --- HIỆU ỨNG KIỂM TRA MÁY ĐÃ NHẬP KEY CHƯA ---
   useEffect(() => {
@@ -860,13 +871,8 @@ export default function App() {
     setMockActive(false);
   };
 
-  const startCentralMockExam = () => {
-    setCurrentExam({
-      title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-      description: "Đề thi cấu trúc chuẩn UET: 50 câu (30% Dễ, 50% Trung bình, 20% Khó) lấy ngẫu nhiên từ ngân hàng câu hỏi đã lọc trùng."
-    });
-
-    // 1. Hàm Fisher-Yates Shuffle chuẩn (Unbiased Shuffle)
+    const startCentralMockExam = () => {
+    // Hàm xáo trộn Fisher-Yates
     const shuffle = (array) => {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -876,25 +882,45 @@ export default function App() {
       return arr;
     };
 
-    // 2. Làm sạch dữ liệu: Lọc bỏ các câu hỏi trùng lặp nội dung văn bản
-    // Sử dụng Map với key là nội dung câu hỏi để đảm bảo tính duy nhất
-    const cleanPool = Array.from(
-      new Map(ALL_QUESTIONS.map(q => [q.question.trim(), q])).values()
-    );
+    // BƯỚC 1: Lọc bỏ các câu hỏi ĐÃ SỬ DỤNG từ CLEAN_POOL
+    const availablePool = CLEAN_POOL.filter(q => !usedQuestionIds.has(q.id));
 
-    // 3. Phân loại theo độ khó từ "ngân hàng sạch"
-    const easyPool = cleanPool.filter(q => q.difficulty === "Dễ");
-    const mediumPool = cleanPool.filter(q => q.difficulty === "Trung bình");
-    const hardPool = cleanPool.filter(q => q.difficulty === "Khó");
+    // BƯỚC 2: Phân loại theo độ khó từ ngân hàng "còn lại"
+    const pools = {
+      easy: availablePool.filter(q => q.difficulty === "Dễ"),
+      medium: availablePool.filter(q => q.difficulty === "Trung bình"),
+      hard: availablePool.filter(q => q.difficulty === "Khó")
+    };
 
-    // 4. Bốc câu hỏi theo đúng tỷ lệ 30% - 50% - 20%
-    const selectedEasy = shuffle(easyPool).slice(0, 15);
-    const selectedMedium = shuffle(mediumPool).slice(0, 25);
-    const selectedHard = shuffle(hardPool).slice(0, 10);
+    // BƯỚC 3: Kiểm tra điều kiện biên (Edge Case)
+    if (
+      pools.easy.length < EXAM_CONFIG.easy ||
+      pools.medium.length < EXAM_CONFIG.medium ||
+      pools.hard.length < EXAM_CONFIG.hard
+    ) {
+      const reset = window.confirm("⚠️ Ngân hàng câu hỏi mới đã cạn! Bạn có muốn reset lại lịch sử để bắt đầu bộ đề mới không?");
+      if (reset) setUsedQuestionIds(new Set());
+      return; 
+    }
 
-    // 5. Trộn tổng hợp 50 câu cuối cùng để độ khó đan xen ngẫu nhiên
+    // BƯỚC 4: Bốc câu hỏi ngẫu nhiên theo đúng tỉ lệ
+    const selectedEasy = shuffle(pools.easy).slice(0, EXAM_CONFIG.easy);
+    const selectedMedium = shuffle(pools.medium).slice(0, EXAM_CONFIG.medium);
+    const selectedHard = shuffle(pools.hard).slice(0, EXAM_CONFIG.hard);
+
+    // BƯỚC 5: Trộn tổng hợp 50 câu cuối cùng
     const finalMockQuestions = shuffle([...selectedEasy, ...selectedMedium, ...selectedHard]);
 
+    // BƯỚC 6: Cập nhật danh sách "Đã dùng" để lần sau không trùng
+    const newUsedIds = new Set(usedQuestionIds);
+    finalMockQuestions.forEach(q => newUsedIds.add(q.id));
+    setUsedQuestionIds(newUsedIds);
+
+    // BƯỚC 7: Cập nhật các trạng thái UI của bạn
+    setCurrentExam({
+      title: "Đề Thi Thử Toàn Diện Tổng Hợp",
+      description: "Đề thi cấu trúc chuẩn UET: 50 câu (30% Dễ, 50% Trung bình, 20% Khó) - KHÔNG TRÙNG LẶP."
+    });
     setQuestionsBank(finalMockQuestions);
     setActiveTab('mock');
     setCurrentQuestionIdx(0);
@@ -902,7 +928,7 @@ export default function App() {
     setIsAnswerSubmitted(false);
     setAnswersState({});
     setTimer(0);
-    setMockTimeRemaining(3600); // 60 phút chuẩn UET
+    setMockTimeRemaining(3600);
     setIsTimerRunning(true);
     setMockActive(true);
   };
