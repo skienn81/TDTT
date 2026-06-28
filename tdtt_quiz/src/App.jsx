@@ -1213,8 +1213,7 @@ export default function App() {
     setIsTimerRunning(true);
     setMockActive(true);
 
-    console.log(`🔥 [DEBUG] Đã bốc thành công: ${counters.easy} Dễ, ${counters.medium} Trung bình, ${counters.hard} Khó.`);
-    console.log("📊 Kích thước kho câu hỏi chữ đã dùng tích lũy:", window.usedQuestionsCache.size);
+    
   };
 
   const handleMockSubmit = () => {
