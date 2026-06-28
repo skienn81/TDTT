@@ -699,7 +699,11 @@ export default function App() {
   const [qDifficultyFilter, setQDifficultyFilter] = useState('Tất cả');
 
   // Quản lý Bookmark toàn cục tiện lợi
-  const [globalBookmarks, setGlobalBookmarks] = useState({});
+  const [globalBookmarks, setGlobalBookmarks] = useState(() => {
+  // Khi trang web tải, nó sẽ kiểm tra xem trong máy có dữ liệu cũ chưa
+  const saved = localStorage.getItem('uet_bookmarks_v9');
+  return saved ? JSON.parse(saved) : {};
+});
 
   // Mock Exam States
   const [mockActive, setMockActive] = useState(false);
@@ -712,6 +716,16 @@ export default function App() {
     // Thêm dòng này để lưu danh sách ID các câu hỏi đã dùng
   const [usedQuestionIds, setUsedQuestionIds] = useState(new Set());
 
+  const clearAllBookmarks = () => {
+  if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ câu hỏi đã đánh dấu?")) {
+    setGlobalBookmarks({});
+    localStorage.removeItem('uet_bookmarks_v9');
+  }
+};
+    // Tự động lưu Bookmark vào máy mỗi khi người dùng nhấn nút Bookmark
+  useEffect(() => {
+    localStorage.setItem('uet_bookmarks_v9', JSON.stringify(globalBookmarks));
+  }, [globalBookmarks]);
   // --- HIỆU ỨNG KIỂM TRA MÁY ĐÃ NHẬP KEY CHƯA ---
   useEffect(() => {
     // 1. Kiểm tra trạng thái kích hoạt từ bộ nhớ máy
