@@ -861,38 +861,51 @@ export default function App() {
   };
 
   const startCentralMockExam = () => {
-  setCurrentExam({
-    title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-    description: "Đề thi cấu trúc chuẩn UET: 30% Dễ, 50% Trung bình, 20% Khó lấy ngẫu nhiên từ ngân hàng 500 câu hỏi."
-  });
+    setCurrentExam({
+      title: "Đề Thi Thử Toàn Diện Tổng Hợp",
+      description: "Đề thi cấu trúc chuẩn UET: 50 câu (30% Dễ, 50% Trung bình, 20% Khó) lấy ngẫu nhiên từ ngân hàng câu hỏi đã lọc trùng."
+    });
 
-  // Phân loại toàn bộ câu hỏi theo độ khó
-  const easyPool = ALL_QUESTIONS.filter(q => q.difficulty === "Dễ");
-  const mediumPool = ALL_QUESTIONS.filter(q => q.difficulty === "Trung bình");
-  const hardPool = ALL_QUESTIONS.filter(q => q.difficulty === "Khó");
+    // 1. Hàm Fisher-Yates Shuffle chuẩn (Unbiased Shuffle)
+    const shuffle = (array) => {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
 
-  // Hàm helper trộn ngẫu nhiên mảng (Fisher-Yates hoặc Sort đơn giản)
-  const shuffle = (array) => [...array].sort(() => 0.5 - Math.random());
+    // 2. Làm sạch dữ liệu: Lọc bỏ các câu hỏi trùng lặp nội dung văn bản
+    // Sử dụng Map với key là nội dung câu hỏi để đảm bảo tính duy nhất
+    const cleanPool = Array.from(
+      new Map(ALL_QUESTIONS.map(q => [q.question.trim(), q])).values()
+    );
 
-  // Bốc đúng số lượng theo tỷ lệ 30% - 50% - 20% (Tổng số: 50 câu)
-  const selectedEasy = shuffle(easyPool).slice(0, 15);
-  const selectedMedium = shuffle(mediumPool).slice(0, 25);
-  const selectedHard = shuffle(hardPool).slice(0, 10);
+    // 3. Phân loại theo độ khó từ "ngân hàng sạch"
+    const easyPool = cleanPool.filter(q => q.difficulty === "Dễ");
+    const mediumPool = cleanPool.filter(q => q.difficulty === "Trung bình");
+    const hardPool = cleanPool.filter(q => q.difficulty === "Khó");
 
-  // Trộn tổng hợp lại toàn bộ 50 câu để độ khó đan xen ngẫu nhiên
-  const finalMockQuestions = shuffle([...selectedEasy, ...selectedMedium, ...selectedHard]);
+    // 4. Bốc câu hỏi theo đúng tỷ lệ 30% - 50% - 20%
+    const selectedEasy = shuffle(easyPool).slice(0, 15);
+    const selectedMedium = shuffle(mediumPool).slice(0, 25);
+    const selectedHard = shuffle(hardPool).slice(0, 10);
 
-  setQuestionsBank(finalMockQuestions);
-  setActiveTab('mock');
-  setCurrentQuestionIdx(0);
-  setSelectedOption(null);
-  setIsAnswerSubmitted(false);
-  setAnswersState({});
-  setTimer(0);
-  setMockTimeRemaining(3600); // 60 phút chuẩn thi cử UET
-  setIsTimerRunning(true);
-  setMockActive(true);
-};
+    // 5. Trộn tổng hợp 50 câu cuối cùng để độ khó đan xen ngẫu nhiên
+    const finalMockQuestions = shuffle([...selectedEasy, ...selectedMedium, ...selectedHard]);
+
+    setQuestionsBank(finalMockQuestions);
+    setActiveTab('mock');
+    setCurrentQuestionIdx(0);
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setAnswersState({});
+    setTimer(0);
+    setMockTimeRemaining(3600); // 60 phút chuẩn UET
+    setIsTimerRunning(true);
+    setMockActive(true);
+  };
 
   const handleMockSubmit = () => {
     setIsTimerRunning(false);
@@ -1267,7 +1280,7 @@ if (!isActivated) {
 
           {/* TIPS PHÍM TẮT BAN ĐÊM CHO DÂN CÔNG NGHỆ */}
           <div className="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4 space-y-2 text-[11px] text-zinc-400">
-            <span className="font-bold text-zinc-200 block uppercase tracking-wider text-[10px]">💡 Phím tắt Pro Coder:</span>
+            <span className="font-bold text-zinc-200 block uppercase tracking-wider text-[10px]">💡 Phím tắt:</span>
             <ul className="space-y-1 font-mono">
               <li>• <span className="text-emerald-400 font-bold">A, B, C, D</span>: Chọn đáp án</li>
               <li>• <span className="text-emerald-400 font-bold">Enter</span>: Gửi / Tiếp tục</li>
