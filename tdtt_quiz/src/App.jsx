@@ -1262,9 +1262,9 @@ export default function App() {
       const prevQ = questionsBank[currentQuestionIdx - 1];
       const saved = answersState[prevQ.id];
       setSelectedOption(saved ? saved.selected : null);
-      setIsAnswerSubmitted(!!saved);
+      // Nếu đã có đáp án đã lưu thì coi như đã submit (ở chế độ luyện tập)
+      setIsAnswerSubmitted(saved ? !mockActive : false);
       setShowHint(false);
-      setIsAnswerSubmitted(true);
     }
   };
 
@@ -1499,22 +1499,28 @@ if (!isActivated) {
                 }
 
                 return (
-                  <button
-                    key={q.id}
-                    onClick={() => {
-                      setCurrentQuestionIdx(q.originalIndex);
-                      setSelectedOption(answersState[questionsBank[q.originalIndex].id]?.selected || null);
-
-                      if (!mockActive) setIsAnswerSubmitted(true);
-                    }}
-                    className={`h-9 w-full rounded-lg border text-xs font-mono transition-all flex items-center justify-center relative ${btnStyle}`}
-                  >
-                    {q.originalIndex + 1}
-                    {isBookmarked && (
-                      <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-sky-400 rounded-full" />
-                    )}
-                  </button>
-                );
+  <button
+    key={q.id}
+    onClick={() => {
+      const targetQ = questionsBank[q.originalIndex];
+      const savedState = answersState[targetQ.id];
+      
+      setCurrentQuestionIdx(q.originalIndex);
+      setSelectedOption(savedState ? savedState.selected : null);
+      
+      // Đồng bộ trạng thái nộp bài dựa trên lịch sử lưu trữ thực tế của câu hỏi đó
+      if (mockActive) {
+        setIsAnswerSubmitted(false); // Nếu đang thi thử thì chưa xem kết quả câu này
+      } else {
+        // Nếu ở chế độ Marathon hoặc đang xem lại bài thi thử đã kết thúc (activeTab === 'mock' && !mockActive)
+        setIsAnswerSubmitted(savedState ? true : false);
+      }
+    }}
+    className={`h-9 w-full rounded-lg border text-xs font-mono transition-all flex items-center justify-center relative ${btnStyle}`}
+  >
+    {q.originalIndex + 1}
+  </button>
+);
               })}
             </div>
 
