@@ -859,7 +859,7 @@ const ALL_QUESTIONS = [
 // ... sau ALL_QUESTIONS ...
 
 // 1. Cấu hình tỉ lệ đề thi
-const EXAM_CONFIG = { easy: 15, medium: 25, hard: 10, total: 50 };
+const EXAM_CONFIG = { easy: 10, medium: 20, hard: 20, total: 50 };
 
 // 2. Làm sạch dữ liệu một lần duy nhất tại đây (Tối ưu hiệu năng)
 const CLEAN_POOL = Array.from(
@@ -1154,7 +1154,7 @@ export default function App() {
     // BƯỚC 7: Cập nhật các trạng thái UI của bạn
     setCurrentExam({
       title: "Đề Thi Thử Toàn Diện Tổng Hợp",
-      description: "Đề thi cấu trúc chuẩn UET: 50 câu (30% Dễ, 50% Trung bình, 20% Khó) - KHÔNG TRÙNG LẶP."
+      description: "Đề thi cấu trúc chuẩn UET: 50 câu (20% Dễ, 40% Trung bình, 40% Khó) - KHÔNG TRÙNG LẶP."
     });
     setQuestionsBank(finalMockQuestions);
     setActiveTab('mock');
@@ -2147,6 +2147,7 @@ if (!isActivated) {
                 )}
               </div>
             </div>
+            
 
           </div>
         )}
